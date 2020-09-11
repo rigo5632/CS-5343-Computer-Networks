@@ -5,8 +5,8 @@ This assignment consists on automating telnet steps for sending an email from ou
 1. Python 3 Compiler
 2. Have access to UTEP's Network
 
-If you don't are remote connect with UTEP's vpn
-[Windows](https://www.utep.edu/cs/_Files/pdfs/VPNWindows10.pdf)
+Remote connections with UTEP's vpn:
+[Windows](https://www.utep.edu/cs/_Files/pdfs/VPNWindows10.pdf)\n
 [MacOS](https://www.utep.edu/technologysupport/_Files/docs/VPN_Mac.pdf)
 
 ## How to run:
