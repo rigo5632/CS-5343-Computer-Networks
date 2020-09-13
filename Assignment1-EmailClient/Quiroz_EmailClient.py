@@ -33,7 +33,6 @@ def serverCommunication(serverName, serverPortNumber, emailRequests):
         print('1. Make sure you are using UTEP\'s network. (VPN)')
         print('2. Server time out')
         print('3. Server did not recognize request encoding')
-        print('4. Invalid address')
         exit()
 
 # Dictionary containing all requests that will be made, and content of email message
@@ -45,7 +44,7 @@ emailRequests = {
     'msgBody'   : 
     {
         'Subject'   : b'Subject: Email from my email client\r\n\r\n', 
-        'body'      : b'This is a test email from my ownm email client. Hope this finds you well. Quiroz, Rigoberto.\r\n'
+        'body'      : b'This is a test email from my own email client. Hope this finds you well. Quiroz, Rigoberto.\r\n'
     },
     'endOfMsg'  : b'.\r\n',
 }
