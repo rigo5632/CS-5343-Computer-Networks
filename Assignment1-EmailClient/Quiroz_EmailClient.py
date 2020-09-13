@@ -12,20 +12,29 @@ def generateRequests(socket, request, type):
 
 # Opens TCP connection to server. Contains a small dictionary of all email requests that will be made.
 def serverCommunication(serverName, serverPortNumber, emailRequests):
-    clientSocket = socket(AF_INET, SOCK_STREAM)
-    clientSocket.connect((serverName, serverPortNumber))
+    try:
+        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket.connect((serverName, serverPortNumber))
 
-    getServerResponse(clientSocket)
+        getServerResponse(clientSocket)
 
-    # Iterates through dictionary making requests
-    for key in emailRequests.keys():
-        if key == 'msgBody':
-            for subKey in emailRequests[key]:
-                generateRequests(clientSocket, emailRequests[key][subKey], 1)
-        else:
-            generateRequests(clientSocket, emailRequests[key], 0)
+        # Iterates through dictionary making requests
+        for key in emailRequests.keys():
+            if key == 'msgBody':
+                for subKey in emailRequests[key]:
+                    generateRequests(clientSocket, emailRequests[key][subKey], 1)
+            else:
+                generateRequests(clientSocket, emailRequests[key], 0)
     
-    clientSocket.close()
+        clientSocket.close()
+    except:
+        print('Connection to server was lost.')
+        print('Possible Errors: ')
+        print('1. Make sure you are using UTEP\'s network. (VPN)')
+        print('2. Server time out')
+        print('3. Server did not recognize request encoding')
+        print('4. Invalid address')
+        exit()
 
 # Dictionary containing all requests that will be made, and content of email message
 emailRequests = {
