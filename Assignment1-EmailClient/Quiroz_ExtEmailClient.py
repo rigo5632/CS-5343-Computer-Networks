@@ -6,6 +6,7 @@ import base64
 def getServerResponse(socket):
     return socket.recv(1024).decode()
 
+# Returns a SSL connection to Google's smtp server
 def establishSecureConnection(socket):
     return ssl.wrap_socket(socket, ssl_version=ssl.PROTOCOL_SSLv23)
 
@@ -23,12 +24,14 @@ def serverCommunication(serverName, serverPortNumber, emailRequests):
 
         print(getServerResponse(clientSocket))
 
+        # unsecure requests
         generateRequests(clientSocket, emailRequests['helo'], 0)
         emailRequests.pop('helo')
 
         generateRequests(clientSocket, emailRequests['starttls'], 0)
         emailRequests.pop('starttls')
         
+        # makes secure requests
         secureConnection = establishSecureConnection(clientSocket)
         # Iterates through dictionary making requests
         for key in emailRequests.keys():
