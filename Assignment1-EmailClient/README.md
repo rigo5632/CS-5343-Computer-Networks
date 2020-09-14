@@ -18,3 +18,20 @@ or
 ```bash
 python3 Quiroz_EmailClient.py
 ```
+
+# Assignment 1.1: Extra Credit Email Client
+The extra credit consists on creating a socket that will be able to communicate with Gmail's SMTP server. The connection must be secure and message encodings are different than
+UTEP's SMTP server.
+
+## Requirements
+1. Python 3 Complier
+
+## How to run:
+To execute python file please run the following command:
+```bash
+py Quiroz_ExtEmailClient.py
+```
+or
+```bash
+python3 Quiroz_ExtEmailClient.py
+```
