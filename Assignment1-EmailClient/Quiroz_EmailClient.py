@@ -2,18 +2,18 @@ from socket import *
 
 # prints response of server
 def getServerResponse(socket):
-    print(socket.recv(1024).decode())
+    print(socket.recv(1024).decode()) # Prints server response, 1MB
 
 # sends requests to server, prints response of server only if request is not the content of email.
 def generateRequests(socket, request, type):
     print(request.decode())
     socket.send(request)
-    getServerResponse(socket) if type == 0 else None
+    getServerResponse(socket) if type == 0 else None # Does not print when sending email content (subject, content) 
 
 # Opens TCP connection to server. Contains a small dictionary of all email requests that will be made.
 def serverCommunication(serverName, serverPortNumber, emailRequests):
     try:
-        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket = socket(AF_INET, SOCK_STREAM) #IPV4 and TCP stream
         clientSocket.connect((serverName, serverPortNumber))
 
         getServerResponse(clientSocket)

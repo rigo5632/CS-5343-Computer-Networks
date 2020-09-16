@@ -4,22 +4,22 @@ import base64
 
 # prints response of server
 def getServerResponse(socket):
-    return socket.recv(1024).decode()
+    return socket.recv(1024).decode() # Prints out 1 MByte of data
 
 # Returns a SSL connection to Google's smtp server
 def establishSecureConnection(socket):
-    return ssl.wrap_socket(socket, ssl_version=ssl.PROTOCOL_SSLv23)
+    return ssl.wrap_socket(socket, ssl_version=ssl.PROTOCOL_SSLv23) # Wraps socket with SSL (Different versions might yield different responses)
 
 # sends requests to server, prints response of server only if request is not the content of email.
 def generateRequests(socket, request, type):
     print(request.decode())
     socket.send(request)
-    print(getServerResponse(socket)) if type == 0 else None
+    print(getServerResponse(socket)) if type == 0 else None # does not print when entering email content (Subject, email content)
 
 # Opens TCP connection to server. Contains a small dictionary of all email requests that will be made.
 def serverCommunication(serverName, serverPortNumber, emailRequests):
     try:
-        clientSocket = socket(AF_INET, SOCK_STREAM)
+        clientSocket = socket(AF_INET, SOCK_STREAM) # IPV4 with a TCP connection
         clientSocket.connect((serverName, serverPortNumber))
 
         print(getServerResponse(clientSocket))
@@ -29,7 +29,7 @@ def serverCommunication(serverName, serverPortNumber, emailRequests):
         emailRequests.pop('helo')
 
         generateRequests(clientSocket, emailRequests['starttls'], 0)
-        emailRequests.pop('starttls')
+        emailRequests.pop('starttls') # From this point your requests must be secure (SSL wrapper)
         
         # makes secure requests
         secureConnection = establishSecureConnection(clientSocket)
@@ -50,7 +50,7 @@ def serverCommunication(serverName, serverPortNumber, emailRequests):
         print('2. Gmail account has restricted access')
         exit()
     finally:
-        secureConnection.close()
+        secureConnection.close() # Closes socket when done
 
 # Ask user for their Gmails Credentials and Recipient of email
 userMail        = str(input('Gmail Email: '))
@@ -64,8 +64,8 @@ emailRequests = {
     'login'     : 
     {
         'authentication'    : b'auth login\r\n',
-        'username'          : base64.b64encode(userMail.encode()) + b'\r\n',
-        'password'          : base64.b64encode(password.encode()) + b'\r\n'
+        'username'          : base64.b64encode(userMail.encode()) + b'\r\n', #Encrypted with base64 (Google's standard)
+        'password'          : base64.b64encode(password.encode()) + b'\r\n' 
     },
     'from'      : ('mail from:<' + userMail + '>\r\n').encode(),
     'to'        : ('rcpt to:<' + recipientEmail + '>\r\n').encode(),
