@@ -33,27 +33,45 @@ def generate_payload(length=10):
 
 # Send using Stop_n_wait protocol
 def send_snw(sock):
-	# Fill out the code here
+    fileSource = './files/Bio.txt'
+    file = open(fileSource, 'r', encoding='utf-8')
+    data = file.read(PACKET_SIZE)
     seq = 0
-    while(seq < 20):
-        data = generate_payload(40).encode()
-        pkt = packet.make(seq, data)
-        print("Sending seq# ", seq, "\n")
+    sock.settimeout(TIMEOUT_INTERVAL)
+    while data:
+        pkt = packet.make(seq, data.encode())
+        print('Sending seq# %i' %seq)
+
         udt.send(pkt, sock, RECEIVER_ADDR)
-        seq = seq+1
+        correctAcknowledgement = receive_snw(sock, pkt)
+        
+        if correctAcknowledgement:
+            seq += 1
+            data = file.read(PACKET_SIZE)
+
         time.sleep(TIMEOUT_INTERVAL)
     pkt = packet.make(seq, "END".encode())
     udt.send(pkt, sock, RECEIVER_ADDR)
 
 # Send using GBN protocol
 def send_gbn(sock):
-
     return
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
-    # Fill here to handle acks
-    return
+    try:
+        acknowldgement, receiverAddr = udt.recv(sock)
+        acknowldgement = int(acknowldgement.decode())
+        print('Acknowledgement: %i' % acknowldgement)
+
+        seq, data = packet.extract(pkt)
+
+        if acknowldgement != seq:
+            return False
+        return True
+    except:
+        return False
+
 
 # Receive thread for GBN
 def receive_gbn(sock):
