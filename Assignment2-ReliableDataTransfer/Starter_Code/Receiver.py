@@ -8,8 +8,15 @@ RECEIVER_ADDR = ('localhost', 8080)
 
 # Receive packets from the sender w/ GBN protocol
 def receive_gbn(sock):
-    # Fill here
-    return
+    payload, senderAddress = udt.recv(sock)
+    seq, data = packet.extract(payload)
+    ack = 0
+    while seq:
+        print(seq)
+        file = open('./files/receiver_bio.txt', 'a')
+        file.write(data.decode())
+        payload, senderAddress = udt.recv(sock)
+        seq, _ = packet.extract(payload)
 
 
 # Receive packets from the sender w/ SR protocol
@@ -20,23 +27,25 @@ def receive_sr(sock, windowsize):
 
 # Receive packets from the sender w/ Stop-n-wait protocol
 def receive_snw(sock):
+    try:
+        file = open('./files/receiver_bio.txt', 'a')
+    except:
+        print('Could Access location')
+        sys.exit(1)
     sock.settimeout(10)
-    endStr = ''
+    data = ''
     previous = -1
-    while endStr!='END':
-        try: pkt, senderaddr = udt.recv(sock)
+    while data != 'END':
+        try: clientPacket, senderAddress = udt.recv(sock)
         except: break
-        seq, data = packet.extract(pkt)
-        endStr = data.decode()
-        print("From: ", senderaddr, ", Seq# ", seq)
-        if previous != seq and seq != 7:
-            file = open('./files/receiver_bio.txt', 'a')
-            file.write(endStr)
-        acknowledgement = str(seq).encode()
-        udt.send(acknowledgement, sock, senderaddr)
-        print('Sending Acknowledgement')
-        previous = seq
-
+        clientSequence, clientPayload = packet.extract(clientPacket)
+        data = clientPacket.decode()
+        print('Seq#: %i' % clientSequence)
+        if previous != clientSequence:
+            file.write(clientPayload.decode())
+        acknowledgement = str(clientSequence).encode()
+        udt.send(acknowledgement, sock, senderAddress)
+        previous = clientSequence
 
 # Main function
 if __name__ == '__main__':
@@ -48,6 +57,6 @@ if __name__ == '__main__':
     sock.bind(RECEIVER_ADDR)
     # filename = sys.argv[1]
     receive_snw(sock)
-
+    #receive_gbn(sock)
     # Close the socket
     sock.close()

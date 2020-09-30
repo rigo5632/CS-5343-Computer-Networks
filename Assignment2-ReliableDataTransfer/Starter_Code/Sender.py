@@ -1,6 +1,6 @@
 import socket
 import sys
-# import _thread
+import _thread
 import time
 import string
 import packet
@@ -12,14 +12,15 @@ from timer import Timer
 PACKET_SIZE = 512
 RECEIVER_ADDR = ('localhost', 8080)
 SENDER_ADDR = ('localhost', 9090)
-SLEEP_INTERVAL = 0.05 # (In seconds)
+#SLEEP_INTERVAL = 0.05 # (In seconds)
+SLEEP_INTERVAL = 1 # (In seconds)
 TIMEOUT_INTERVAL = 0.5
 WINDOW_SIZE = 4
 
 # You can use some shared resources over the two threads
-# base = 0
-# mutex = _thread.allocate_lock()
-# timer = Timer(TIMEOUT_INTERVAL)
+base = 0
+mutex = _thread.allocate_lock()
+timer = Timer(TIMEOUT_INTERVAL)
 
 # Need to have two threads: one for sending and another for receiving ACKs
 
@@ -33,64 +34,69 @@ def generate_payload(length=10):
 
 # Send using Stop_n_wait protocol
 def send_snw(sock):
-    fileSource = './files/Bio.txt'
-    file = open(fileSource, 'r', encoding='utf-8')
-    data = file.read(PACKET_SIZE)
+    global base
+    global mutex
+    global timer
+    try:
+        fileSource = './files/Bio.txt'
+        file = open(fileSource, 'r', encoding='utf-8')
+        data = file.read(PACKET_SIZE)
+    except:
+        print('File %s not found' %fileSource)
+        sys.exit(1)
+    packets = []
     seq = 0
-    sock.settimeout(TIMEOUT_INTERVAL)
     while data:
-        pkt = packet.make(seq, data.encode())
-        print('Sending seq# %i' %seq)
+        packets.append(packet.make(seq, data.encode()))
+        seq += 1
+        data = file.read(PACKET_SIZE)
+    endConnectionPacket = packet.make(seq, "END".encode())
+    packets.append(endConnectionPacket)
 
-        udt.send(pkt, sock, RECEIVER_ADDR)
-        correctAcknowledgement = receive_snw(sock, pkt)
+    sock.settimeout(TIMEOUT_INTERVAL)
+    while base < len(packets):
+        mutex.acquire()
+        sending = base
+        print('Sending Sequence #: %i' %base)
         
-        if correctAcknowledgement:
-            seq += 1
-            data = file.read(PACKET_SIZE)
+        udt.send(packets[base], sock, RECEIVER_ADDR)
+        _thread.start_new_thread(receive_snw, (sock, packets[base]))
 
-        time.sleep(TIMEOUT_INTERVAL)
-    pkt = packet.make(seq, "END".encode())
-    udt.send(pkt, sock, RECEIVER_ADDR)
-
-# Send using GBN protocol
-def send_gbn(sock):
-    return
+        mutex.release()
+        time.sleep(SLEEP_INTERVAL)
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
+    global base
+    global mutex
+    global timer
+
+    mutex.acquire()
     try:
-        acknowldgement, receiverAddr = udt.recv(sock)
-        acknowldgement = int(acknowldgement.decode())
-        print('Acknowledgement: %i' % acknowldgement)
 
-        seq, data = packet.extract(pkt)
+        serverPayload, _ = udt.recv(sock)
+        serverAcknowledgement = int(serverPayload.decode())
+        clientSequence, _ = packet.extract(pkt)
 
-        if acknowldgement != seq:
-            return False
-        return True
+        if serverAcknowledgement == clientSequence:
+            print('Success... Updating new base')
+            base += 1
     except:
-        return False
+        print('Client did not get server acknowldgement')
 
 
-# Receive thread for GBN
-def receive_gbn(sock):
-    # Fill here to handle acks
-    return
-
+    mutex.release()
 
 # Main function
 if __name__ == '__main__':
-    # if len(sys.argv) != 2:
-    #     print('Expected filename as command line argument')
-    #     exit()
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(SENDER_ADDR)
 
-    # filename = sys.argv[1]
 
-    send_snw(sock)
-    sock.close()
+    _thread.start_new_thread(send_snw, (sock, ))
+
+    print('Ctrl-c to quit')
+    while True:
+        pass
 
 
