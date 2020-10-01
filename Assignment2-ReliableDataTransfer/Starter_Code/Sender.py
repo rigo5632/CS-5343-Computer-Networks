@@ -36,34 +36,32 @@ def generate_payload(length=10):
 def send_snw(sock):
     global base
     global mutex
-    global timer
-    try:
+    try: # check if file exists and if it does get the first packet
         fileSource = './files/Bio.txt'
         file = open(fileSource, 'r', encoding='utf-8')
         data = file.read(PACKET_SIZE)
-    except:
+    except: # file does not exists
         print('File %s not found' %fileSource)
         sys.exit(1)
     packets = []
     seq = 0
-    while data:
+    while data: # stores all payloads 
         packets.append(packet.make(seq, data.encode()))
         seq += 1
-        data = file.read(PACKET_SIZE)
-    endConnectionPacket = packet.make(seq, "END".encode())
+        data = file.read(PACKET_SIZE) # gets all new packet from file
+    endConnectionPacket = packet.make(seq, "END".encode()) # adds packet to end connection
     packets.append(endConnectionPacket)
 
-    sock.settimeout(TIMEOUT_INTERVAL)
+    sock.settimeout(TIMEOUT_INTERVAL) # timeout to send new packages
     while base < len(packets):
-        mutex.acquire()
-        sending = base
+        mutex.acquire() # share resources
         print('Sending Sequence #: %i' %base)
         
-        udt.send(packets[base], sock, RECEIVER_ADDR)
-        _thread.start_new_thread(receive_snw, (sock, packets[base]))
+        udt.send(packets[base], sock, RECEIVER_ADDR) # send packet
+        _thread.start_new_thread(receive_snw, (sock, packets[base])) # nre thread: receieve messages
 
-        mutex.release()
-        time.sleep(SLEEP_INTERVAL)
+        mutex.release() # release lock
+        time.sleep(SLEEP_INTERVAL) # cooldown
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
@@ -71,20 +69,17 @@ def receive_snw(sock, pkt):
     global mutex
     global timer
 
-    mutex.acquire()
+    mutex.acquire() # share resources
     try:
-
-        serverPayload, _ = udt.recv(sock)
-        serverAcknowledgement = int(serverPayload.decode())
+        serverPayload, _ = udt.recv(sock) # wait for server response
+        serverAcknowledgement = int(serverPayload.decode()) 
         clientSequence, _ = packet.extract(pkt)
 
-        if serverAcknowledgement == clientSequence:
+        if serverAcknowledgement == clientSequence: # Check if the acknowledgement is correct
             print('Success... Updating new base')
-            base += 1
-    except:
+            base += 1 # update base, new packet will be sent
+    except: # Client did not get response from server, either through timeout or lost package
         print('Client did not get server acknowldgement')
-
-
     mutex.release()
 
 # Main function
@@ -92,11 +87,9 @@ if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(SENDER_ADDR)
 
-
     _thread.start_new_thread(send_snw, (sock, ))
 
     print('Ctrl-c to quit')
-    while True:
-        pass
+    while True: pass
 
 
