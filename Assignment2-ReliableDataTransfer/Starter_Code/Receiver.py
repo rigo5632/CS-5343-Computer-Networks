@@ -32,7 +32,7 @@ def receive_snw(sock):
     except: # cannot create file
         print('Could Access location')
         sys.exit(1)
-    sock.settimeout(10) # socket timer
+    sock.settimeout(5) # socket timer
     data = ''
     previous = -1
     while data != 'END': 
