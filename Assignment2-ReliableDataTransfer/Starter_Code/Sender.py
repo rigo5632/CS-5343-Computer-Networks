@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import socket
 import sys
 import _thread
@@ -12,8 +14,7 @@ from timer import Timer
 PACKET_SIZE = 512
 RECEIVER_ADDR = ('localhost', 8080)
 SENDER_ADDR = ('localhost', 9090)
-#SLEEP_INTERVAL = 0.05 # (In seconds)
-SLEEP_INTERVAL = 1 # (In seconds)
+SLEEP_INTERVAL = 0.05 # (In seconds)
 TIMEOUT_INTERVAL = 0.5
 WINDOW_SIZE = 4
 
@@ -35,67 +36,81 @@ def generate_payload(length=10):
 # Send using Stop_n_wait protocol
 def send_snw(sock):
     global base
+    global timer
     global mutex
-    try: # check if file exists and if it does get the first packet
-        fileSource = './files/Bio.txt'
-        file = open(fileSource, 'r', encoding='utf-8')
-        data = file.read(PACKET_SIZE)
-    except: # file does not exists
-        print('File %s not found' %fileSource)
-        sys.exit(1)
+
     packets = []
-    seq = 0
-    while data: # stores all payloads 
-        packets.append(packet.make(seq, data.encode()))
-        seq += 1
-        data = file.read(PACKET_SIZE) # gets all new packet from file
-    endConnectionPacket = packet.make(seq, "END".encode()) # adds packet to end connection
-    packets.append(endConnectionPacket)
+    sequence = 0
+    try: 
+        file = open('./files/Bio.txt', 'rb')
+        data = file.read(PACKET_SIZE)
+    except:
+        print('File does not exists')
+        sys.exit(1)
+    
+    while data:
+        packets.append(packet.make(sequence, data))
+        data = file.read(PACKET_SIZE)
+        sequence += 1
+    
+    _thread.start_new_thread(receive_snw, (sock, packets))
 
-    sock.settimeout(TIMEOUT_INTERVAL) # timeout to send new packages
     while base < len(packets):
-        if base == len(packets): break
-        mutex.acquire() # share resources
-        print('Sending Sequence #: %i' %base)
-        
-        udt.send(packets[base], sock, RECEIVER_ADDR) # send packet
-        _thread.start_new_thread(receive_snw, (sock, packets)) # new thread: receieve messages
+        currentBase = base
+        print('Sending Sequence: %i' %base)
 
-        mutex.release() # release lock
-        time.sleep(SLEEP_INTERVAL) # cooldown
-    sys.exit(0) # close Thread 1
+        udt.send(packets[base], sock, RECEIVER_ADDR)
+        if not timer.running(): timer.start()
+        
+        while not timer.timeout():
+            if currentBase != base: break
+            pass
+    
+        if timer.timeout():
+            print('*** ERROR: TIMEOUT OCCUREED ***')
+            base = currentBase
+        time.sleep(TIMEOUT_INTERVAL)
+    sys.exit(0)
+    
+
+
+
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
     global base
-    global mutex
     global timer
+    global mutex
 
-    if base == len(pkt): return
-    mutex.acquire() # share resources
-    try:
-        serverPayload, _ = udt.recv(sock) # wait for server response
-        serverAcknowledgement = int(serverPayload.decode()) 
-        clientSequence, _ = packet.extract(pkt[base])
+    # Fill here to handle acks
+    while base < len(pkt):
+        currentSequence, _ = packet.extract(pkt[base])
+        try:
+            acknowledgement, _ = udt.recv(sock)
+        except:
+            print('*** ERROR: LOST CONNECTION TO SERVER')
+            sys.exit(1)
+        acknowledgement = int(acknowledgement.decode())
+        currentSequence = int(currentSequence)
 
-        if serverAcknowledgement == clientSequence: # Check if the acknowledgement is correct
-            print('Success... Updating new base')
-            base += 1 # update base, new packet will be sent
-    except: # Client did not get response from server, either through timeout or lost package
-        print('Client did not get server acknowldgement')
-    mutex.release()
-    sys.exit(0) # Close Thread 2
+        if acknowledgement == currentSequence:
+            mutex.acquire()
+            base += 1
+            timer.stop()
+            mutex.release()
+        else:
+            print('\n*** ERROR: Received Incorrect Acknowledgement ***\n')
+            print('Expected Acknowledgement: %i' %currentSequence) 
+            print('Received Acknowledgement: %i' %acknowledgement) 
+    sys.exit(0)
 
 # Main function
 if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(SENDER_ADDR)
 
-    _thread.start_new_thread(send_snw, (sock, ))
+    send_snw(sock)
 
-    print('Ctrl-c to quit')
-    while True:
-        if base == 8: break # break 
-        pass
+
 
 

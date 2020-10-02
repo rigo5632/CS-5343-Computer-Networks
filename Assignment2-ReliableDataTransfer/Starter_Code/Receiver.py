@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 # receiver.py - The receiver in the reliable data transer protocol
 import packet
 import socket
