@@ -1,6 +1,6 @@
 import socket
 import sys
-# import _thread
+import _thread
 import time
 import string
 import packet
@@ -17,9 +17,9 @@ TIMEOUT_INTERVAL = 0.5
 WINDOW_SIZE = 4
 
 # You can use some shared resources over the two threads
-# base = 0
-# mutex = _thread.allocate_lock()
-# timer = Timer(TIMEOUT_INTERVAL)
+base = 0
+mutex = _thread.allocate_lock()
+timer = Timer(TIMEOUT_INTERVAL)
 
 # Need to have two threads: one for sending and another for receiving ACKs
 
@@ -31,19 +31,37 @@ def generate_payload(length=10):
     return result_str
 
 
-# Send using Stop_n_wait protocol
+# Send using Stop_n_wait protocol: Thread-1
 def send_snw(sock):
+    global base
+    global timer
+    global mutex
 	# Fill out the code here
+    packets = []
     seq = 0
     while(seq < 20):
         data = generate_payload(40).encode()
         pkt = packet.make(seq, data)
-        print("Sending seq# ", seq, "\n")
-        udt.send(pkt, sock, RECEIVER_ADDR)
-        seq = seq+1
+        packets.append(pkt)
+        seq += 1
+    
+    _thread.start_new_thread(receive_snw, (sock, packets))
+
+    while base < len(packets):
+        currentBase = base
+        print('Sending Sequence: %i' %base)
+
+        udt.send(packets[base], sock, RECEIVER_ADDR)
+        if not timer.running(): timer.start()
+        while not timer.timeout():
+            if currentBase != base: break
+    
+        if timer.timeout():
+            print('*** ERROR: TIMEOUT OCCUREED ***')
+            base = currentBase
         time.sleep(TIMEOUT_INTERVAL)
-    pkt = packet.make(seq, "END".encode())
-    udt.send(pkt, sock, RECEIVER_ADDR)
+    sys.exit(0)
+
 
 # Send using GBN protocol
 def send_gbn(sock):
@@ -52,8 +70,31 @@ def send_gbn(sock):
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
+    global base
+    global timer
+    global mutex
+
     # Fill here to handle acks
-    return
+    while base < len(pkt):
+        currentSequence, _ = packet.extract(pkt[base])
+        try:
+            acknowledgement, _ = udt.recv(sock)
+        except:
+            print('*** ERROR: LOST CONNECTION TO SERVER')
+            sys.exit(1)
+        acknowledgement = int(acknowledgement.decode())
+        currentSequence = int(currentSequence)
+
+        if acknowledgement == currentSequence:
+            mutex.acquire()
+            base += 1
+            timer.stop()
+            mutex.release()
+        else:
+            print('\n*** ERROR: Received Incorrect Acknowledgement ***\n')
+            print('Expected Acknowledgement: %i' %currentSequence) 
+            print('Received Acknowledgement: %i' %acknowledgement) 
+    sys.exit(0)
 
 # Receive thread for GBN
 def receive_gbn(sock):
@@ -63,14 +104,8 @@ def receive_gbn(sock):
 
 # Main function
 if __name__ == '__main__':
-    # if len(sys.argv) != 2:
-    #     print('Expected filename as command line argument')
-    #     exit()
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(SENDER_ADDR)
-
-    # filename = sys.argv[1]
 
     send_snw(sock)
     sock.close()

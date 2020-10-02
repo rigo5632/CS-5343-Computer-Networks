@@ -20,12 +20,20 @@ def receive_sr(sock, windowsize):
 
 # Receive packets from the sender w/ Stop-n-wait protocol
 def receive_snw(sock):
-   endStr = ''
-   while endStr!='END':
-       pkt, senderaddr = udt.recv(sock)
-       seq, data = packet.extract(pkt)
-       endStr = data.decode()
-       print("From: ", senderaddr, ", Seq# ", seq, endStr)
+    endStr = ''
+    sock.settimeout(5)
+    while True:
+        try: 
+            pkt, senderaddr = udt.recv(sock)
+        except: 
+            print('Server Shutting down')
+            break
+        seq, data = packet.extract(pkt)
+        endStr = data.decode()
+        print("From: ", senderaddr, ", Seq# ", seq, endStr)
+        acknowledgement = str(seq).encode()
+        udt.send(acknowledgement, sock, senderaddr)
+    sys.exit(0)
 
 
 # Main function
