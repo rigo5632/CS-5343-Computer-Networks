@@ -4,27 +4,43 @@ import packet
 import socket
 import sys
 import udt
+from timer import Timer
 
 RECEIVER_ADDR = ('localhost', 8080)
 
 # Receive packets from the sender w/ GBN protocol
 def receive_gbn(sock):
-    payload, senderAddress = udt.recv(sock)
-    seq, data = packet.extract(payload)
-    ack = 0
-    while seq:
-        print(seq)
-        file = open('./files/receiver_bio.txt', 'a')
-        file.write(data.decode())
-        payload, senderAddress = udt.recv(sock)
-        seq, _ = packet.extract(payload)
+    # Fill here
+    sock.settimeout(10)
+    while True:
+        try:
+            clientPacket, clientAddress = udt.recv(sock)
+        except:
+            print('Server Shutting Down')
+            sys.exit(1)
+        
+        clientSequence, clientData = packet.extract(clientPacket)
+        print(clientSequence)
+        acknowledgement = packet.make(clientSequence, str(clientSequence).encode())
+        udt.send(acknowledgement, sock, clientAddress)
+
+
+    return
 
 
 # Receive packets from the sender w/ SR protocol
 def receive_sr(sock, windowsize):
-    # Fill here
-    return
-
+    sock.settimeout(5)
+    while True:
+        try:
+            pkt, senderAddr = udt.recv(sock)
+        except:
+            print('Shutting Down Server')
+            sys.exit(1)
+        seq, data = packet.extract(pkt)
+        print(seq)
+        ack = str(seq).encode()
+        udt.send(ack, sock, senderAddr)
 
 # Receive packets from the sender w/ Stop-n-wait protocol
 def receive_snw(sock):
@@ -56,7 +72,9 @@ if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(RECEIVER_ADDR)
     # filename = sys.argv[1]
-    receive_snw(sock)
+    #receive_snw(sock)
+    receive_gbn(sock)
+    #receive_sr(sock, 7)
     #receive_gbn(sock)
     # Close the socket
     sock.close()
