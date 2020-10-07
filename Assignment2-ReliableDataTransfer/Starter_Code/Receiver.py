@@ -26,22 +26,7 @@ def receive_gbn(sock):
     return
 
 
-# Receive packets from the sender w/ SR protocol
-def receive_sr(sock, windowsize):
-    # Fill here
-    sock.settimeout(10)
-    while True:
-        try:
-            clientPacket, clientAddress = udt.recv(sock)
-        except:
-            print('Server Shutting Down')
-            sys.exit(1)
-        
-        clientSequence, clientData = packet.extract(clientPacket)
-        print(clientSequence)
-        acknowledgement = packet.make(clientSequence, str(clientSequence).encode())
-        udt.send(acknowledgement, sock, clientAddress)
-    return
+
 
 # Receive packets from the sender w/ Stop-n-wait protocol
 def receive_snw(sock):
@@ -59,17 +44,20 @@ def receive_snw(sock):
         clientSequence, clientPayload = packet.extract(clientPacket)
         data = clientPacket.decode()
         print('Seq#: %i' % clientSequence)
-        if previous != clientSequence: file.write(clientPayload.decode()) # write data to file
+        if previous != clientSequence:
+            print(clientPayload)
+            file.write(clientPayload.decode()) # write data to file
         acknowledgement = str(clientSequence).encode() # generate ack and send
         udt.send(acknowledgement, sock, senderAddress)
         previous = clientSequence # update last seen client sequence
+    
 
 # Main function
 if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(RECEIVER_ADDR)
-    #receive_snw(sock)
+    receive_snw(sock)
     #receive_gbn(sock)
-    receive_sr(sock, 7//2)
+    #receive_sr(sock, 7//2)
     # Close the socket
     sock.close()
