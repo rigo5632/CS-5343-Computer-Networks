@@ -23,24 +23,25 @@ def receive_gbn(sock):
         print(clientSequence)
         acknowledgement = packet.make(clientSequence, str(clientSequence).encode())
         udt.send(acknowledgement, sock, clientAddress)
-
-
     return
 
 
 # Receive packets from the sender w/ SR protocol
 def receive_sr(sock, windowsize):
-    sock.settimeout(5)
+    # Fill here
+    sock.settimeout(10)
     while True:
         try:
-            pkt, senderAddr = udt.recv(sock)
+            clientPacket, clientAddress = udt.recv(sock)
         except:
-            print('Shutting Down Server')
+            print('Server Shutting Down')
             sys.exit(1)
-        seq, data = packet.extract(pkt)
-        print(seq)
-        ack = str(seq).encode()
-        udt.send(ack, sock, senderAddr)
+        
+        clientSequence, clientData = packet.extract(clientPacket)
+        print(clientSequence)
+        acknowledgement = packet.make(clientSequence, str(clientSequence).encode())
+        udt.send(acknowledgement, sock, clientAddress)
+    return
 
 # Receive packets from the sender w/ Stop-n-wait protocol
 def receive_snw(sock):
@@ -49,7 +50,7 @@ def receive_snw(sock):
     except: # cannot create file
         print('Could Access location')
         sys.exit(1)
-    sock.settimeout(5) # socket timer
+    sock.settimeout(10) # socket timer
     data = ''
     previous = -1
     while data != 'END': 
@@ -65,16 +66,10 @@ def receive_snw(sock):
 
 # Main function
 if __name__ == '__main__':
-    # if len(sys.argv) != 2:
-    #     print('Expected filename as command line argument')
-    #     exit()
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(RECEIVER_ADDR)
-    # filename = sys.argv[1]
     #receive_snw(sock)
-    receive_gbn(sock)
-    #receive_sr(sock, 7)
     #receive_gbn(sock)
+    receive_sr(sock, 7//2)
     # Close the socket
     sock.close()

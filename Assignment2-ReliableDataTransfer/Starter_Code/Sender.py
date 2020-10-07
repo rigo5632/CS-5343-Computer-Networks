@@ -19,6 +19,7 @@ SLEEP_INTERVAL = 0.05 # (In seconds)
 #SLEEP_INTERVAL = 10 # (In seconds)
 TIMEOUT_INTERVAL = 0.5
 WINDOW_SIZE = 4
+SELECTIVE_RECEIVE_STATUS = {}
 
 # You can use some shared resources over the two threads
 base = 0
@@ -41,6 +42,7 @@ def send_snw(sock):
     global timer
     global mutex
 
+    # read file and store packets
     packets = []
     sequence = 0
     try: 
@@ -49,26 +51,26 @@ def send_snw(sock):
     except:
         print('File does not exists')
         sys.exit(1)
-    
+    # get all data from file
     while data:
         packets.append(packet.make(sequence, data))
         data = file.read(PACKET_SIZE)
         sequence += 1
     
+    #receiver thread
     _thread.start_new_thread(receive_snw, (sock, packets))
 
     while base < len(packets):
         currentBase = base
         print('Sending Sequence: %i' %base)
-
-        udt.send(packets[base], sock, RECEIVER_ADDR)
-        if not timer.running(): timer.start()
+        udt.send(packets[base], sock, RECEIVER_ADDR) # send packet
+        if not timer.running(): timer.start() # start timer
         
-        while not timer.timeout():
+        while not timer.timeout(): # while we have time to receive packets
             if currentBase != base: break
             pass
     
-        if timer.timeout():
+        if timer.timeout(): # timeout ouccrs
             print('*** ERROR: TIMEOUT OCCUREED ***')
             base = currentBase
         time.sleep(TIMEOUT_INTERVAL)
@@ -80,8 +82,9 @@ def receive_snw(sock, pkt):
     global timer
     global mutex
 
-    # Fill here to handle acks
+
     while base < len(pkt):
+        # get out packet and server packet
         currentSequence, _ = packet.extract(pkt[base])
         try:
             acknowledgement, _ = udt.recv(sock)
@@ -91,6 +94,7 @@ def receive_snw(sock, pkt):
         acknowledgement = int(acknowledgement.decode())
         currentSequence = int(currentSequence)
 
+        # see if we got the correct ack
         if acknowledgement == currentSequence:
             mutex.acquire()
             base += 1
@@ -183,6 +187,11 @@ def receive_gbn(sock):
             print('FAILED')
     return
 
+def send_sr(sock):
+
+
+def receive_sr(sock):
+
 
 
 # Main function
@@ -191,7 +200,8 @@ if __name__ == '__main__':
     sock.bind(SENDER_ADDR)
 
     #send_snw(sock)
-    send_gbn(sock)
+    #send_gbn(sock)
+    send_sr(sock)
 
 
 
