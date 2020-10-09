@@ -12,6 +12,13 @@ RECEIVER_ADDR = ('localhost', 8080)
 def receive_gbn(sock):
     # Fill here
     sock.settimeout(10)
+    try: # open file
+        file = open('./files/receiver_bio.txt', 'a')
+    except: # cannot create file
+        print('Could Access location')
+        sys.exit(1)
+    
+    previous = -1
     while True:
         try:
             clientPacket, clientAddress = udt.recv(sock)
@@ -20,10 +27,12 @@ def receive_gbn(sock):
             sys.exit(1)
         
         clientSequence, clientData = packet.extract(clientPacket)
-        print(clientSequence)
+        print('Received client sequence', clientSequence)
+        if previous+1 == clientSequence:
+            file.write(clientData.decode()) # write data to file
+            previous = clientSequence # update last seen client sequence
         acknowledgement = packet.make(clientSequence, str(clientSequence).encode())
         udt.send(acknowledgement, sock, clientAddress)
-
 
     return
 
