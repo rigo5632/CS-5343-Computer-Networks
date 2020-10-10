@@ -51,7 +51,7 @@ def send_snw(sock):
     except:
         print('File does not exists')
         sys.exit(1)
-    # get all data from file
+    # get all data from files
     while data:
         packets.append(packet.make(sequence, data.encode()))
         data = file.read(PACKET_SIZE)
