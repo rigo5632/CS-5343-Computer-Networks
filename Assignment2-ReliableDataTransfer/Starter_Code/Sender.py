@@ -108,15 +108,12 @@ def send_gbn(sock):
     global timer
     global mutex
     global WINDOW_SIZE
-
-    
     try:
         file = open('./files/Bio.txt', 'rb')
     except:
         print('File was not found')
         sys.exit(1)
     
-
     data = file.read(PACKET_SIZE)
     packets = []
     sequence = 0
@@ -126,17 +123,13 @@ def send_gbn(sock):
         sequence += 1
 
     _thread.start_new_thread(receive_gbn, (sock,))
-    
     while base < len(packets):
         currentBase = base
-
         if WINDOW_SIZE >= len(packets): WINDOW_SIZE = len(packets)
-
-        
+    
         for i in range(base, WINDOW_SIZE):
             udt.send(packets[i], sock, RECEIVER_ADDR)
-            
-        
+                    
         if not timer.running(): timer.start()
 
         # while we have time in out timer 0 - 0.5
@@ -153,8 +146,8 @@ def send_gbn(sock):
         timer.stop()
         time.sleep(SLEEP_INTERVAL)
         print('----------------------------------------')
-
     return
+
 # Receive thread for GBN
 def receive_gbn(sock):
     # Fill here to handle acks
