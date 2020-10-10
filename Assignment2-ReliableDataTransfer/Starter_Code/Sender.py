@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import socket
 import sys
 import _thread
@@ -8,13 +10,16 @@ import udt
 import random
 from timer import Timer
 
+
 # Some already defined parameters
 PACKET_SIZE = 512
 RECEIVER_ADDR = ('localhost', 8080)
 SENDER_ADDR = ('localhost', 9090)
 SLEEP_INTERVAL = 0.05 # (In seconds)
+#SLEEP_INTERVAL = 10 # (In seconds)
 TIMEOUT_INTERVAL = 0.5
 WINDOW_SIZE = 4
+SELECTIVE_RECEIVE_STATUS = {}
 
 # You can use some shared resources over the two threads
 base = 0
@@ -31,42 +36,46 @@ def generate_payload(length=10):
     return result_str
 
 
-# Send using Stop_n_wait protocol: Thread-1
+# Send using Stop_n_wait protocol
 def send_snw(sock):
     global base
     global timer
     global mutex
-	# Fill out the code here
+
+    # read file and store packets
     packets = []
-    seq = 0
-    while(seq < 20):
-        data = generate_payload(40).encode()
-        pkt = packet.make(seq, data)
-        packets.append(pkt)
-        seq += 1
+    sequence = 0
+    try: 
+        file = open('./files/Bio.txt', 'r', encoding='utf-8')
+        data = file.read(PACKET_SIZE)
+    except:
+        print('File does not exists')
+        sys.exit(1)
+    # get all data from file
+    while data:
+        packets.append(packet.make(sequence, data.encode()))
+        data = file.read(PACKET_SIZE)
+        sequence += 1
     
+    #receiver thread
     _thread.start_new_thread(receive_snw, (sock, packets))
 
     while base < len(packets):
         currentBase = base
         print('Sending Sequence: %i' %base)
-
-        udt.send(packets[base], sock, RECEIVER_ADDR)
-        if not timer.running(): timer.start()
-        while not timer.timeout():
+        udt.send(packets[base], sock, RECEIVER_ADDR) # send packet
+        if not timer.running(): timer.start() # start timer
+        
+        while not timer.timeout(): # while we have time to receive packets
             if currentBase != base: break
+            pass
     
-        if timer.timeout():
+        if timer.timeout(): # timeout ouccrs
             print('*** ERROR: TIMEOUT OCCUREED ***')
             base = currentBase
+            timer.stop()
         time.sleep(TIMEOUT_INTERVAL)
     sys.exit(0)
-
-
-# Send using GBN protocol
-def send_gbn(sock):
-
-    return
 
 # Receive thread for stop-n-wait
 def receive_snw(sock, pkt):
@@ -74,8 +83,9 @@ def receive_snw(sock, pkt):
     global timer
     global mutex
 
-    # Fill here to handle acks
+
     while base < len(pkt):
+        # get out packet and server packet
         currentSequence, _ = packet.extract(pkt[base])
         try:
             acknowledgement, _ = udt.recv(sock)
@@ -85,6 +95,7 @@ def receive_snw(sock, pkt):
         acknowledgement = int(acknowledgement.decode())
         currentSequence = int(currentSequence)
 
+        # see if we got the correct ack
         if acknowledgement == currentSequence:
             mutex.acquire()
             base += 1
@@ -96,18 +107,15 @@ def receive_snw(sock, pkt):
             print('Received Acknowledgement: %i' %acknowledgement) 
     sys.exit(0)
 
-# Receive thread for GBN
-def receive_gbn(sock):
-    # Fill here to handle acks
-    return
-
-
 # Main function
 if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(SENDER_ADDR)
 
     send_snw(sock)
-    sock.close()
+    #send_gbn(sock)
+    #send_sr(sock)
+
+
 
 
