@@ -76,7 +76,7 @@ int main(){
   char filter_exp[] = "";
 
   if(option == 2){ 
-    strcpy(filter_exp, "src host 10.0.2.15 and dst host 192.168.0.11 and icmp"); 
+    strcpy(filter_exp, "src host 10.0.2.15 and dst host 10.0.2.15 and icmp"); 
   }
   else if(option == 3){
     int x_limit;
