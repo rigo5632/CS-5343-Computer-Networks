@@ -72,27 +72,42 @@ class Part3Controller (object):
     hnotrustAddress, _ = IPS['hnotrust']
     
     rules = [
-      #host 20 settings
-      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      #host 10 settings
-      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      #host 30 settings
-      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      #server 1 settings
-      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
-      #allow ARP Packets for hosts
-      {'dl_type':0x806,'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'type':'allow'},
-      {'dl_type':0x806,'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'type':'allow'},
-      {'dl_type':0x806,'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'type':'allow'},
-      {'dl_type':0x806,'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'type':'allow'},
+      #host 20 settings, allow all hosts
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      #host 10 settings, allow all hosts
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      #host 30 settings, allow all hosts
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      #server 1 settings, allow all hosts
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      #untrusted settings, allow all hosts
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(hnotrustAddress),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(hnotrustAddress),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(hnotrustAddress),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(hnotrustAddress),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':0},
+      #allow ARP Packets for all hosts
+      {'dl_type':0x806,'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'type':1},
+      {'dl_type':0x806,'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'type':1},
+      {'dl_type':0x806,'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'type':1},
+      {'dl_type':0x806,'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'type':1},
+      {'dl_type':0x806,'nw_dst':IPAddr(hnotrustAddress),'action':of.OFPP_NORMAL,'type':1},
+      #block icmp protocol and traffic from outside networks into our internal network 
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host10Address),'action':None,'tp_dst':None,'tp_src':None,'dl_type':0x800,'nw_proto':None,'type':2},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host20Address),'action':None,'tp_dst':None,'tp_src':None,'dl_type':0x800,'nw_proto':None,'type':2},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(host30Address),'action':None,'tp_dst':None,'tp_src':None,'dl_type':0x800,'nw_proto':None,'type':2},
+      {'nw_src':IPAddr(hnotrustAddress),'nw_dst':IPAddr(server1Address),'action':None,'tp_dst':None,'tp_src':None,'dl_type':0x800,'nw_proto':None,'type':2},
     ]
     self.ruleSetUp(rules)
 
@@ -107,13 +122,20 @@ class Part3Controller (object):
     for rule in rules:
       msg = of.ofp_flow_mod()
       if self.connection.dpid == 21:
-        if 'tp_src' in rule.keys():
+        if rule['type'] == 0:
           msg.match.nw_src = rule['nw_src']
           msg.match.nw_dst = rule['nw_dst']
           msg.match.tp_src = rule['tp_src']
           msg.match.tp_dst = rule['tp_dst']
           msg.match.dl_type = rule['dl_type']
-          msg.actions.append(of.ofp_action_output(port=rule['action'])) 
+          msg.actions.append(of.ofp_action_output(port=rule['action']))
+        elif rule['type'] == 2:
+          msg.match.nw_src = rule['nw_src']
+          msg.match.nw_dst = rule['nw_dst']
+          msg.match.tp_src = rule['tp_src']
+          msg.match.tp_dst = rule['tp_dst']
+          msg.match.dl_type = rule['dl_type']
+          msg.match.nw_proto = rule['nw_proto']
         else:
           msg.match.dl_type = rule['dl_type']
           msg.match.nw_dst = rule['nw_dst']
