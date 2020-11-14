@@ -28,7 +28,7 @@ Install Necessary Package:
 
 In order for the controller to function, run the following commands concurrently:
 
-*/pox.py part2controller* #run first (the *pox.py* file should be found under the default branch)
+*/pox.py part2controller* #run first (the *pox.py* file should be found under the default branch folder)
 
 *sudo ./part2* #run second
 
