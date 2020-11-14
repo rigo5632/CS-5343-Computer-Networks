@@ -1,7 +1,7 @@
 from pox.core import core
 import pox.openflow.libopenflow_01 as of
 from pox.lib.addresses import IPAddr, IPAddr6, EthAddr
-
+import pox.lib.packet as pkt
 log = core.getLogger()
 
 #statically allocate a routing table for hosts
@@ -21,7 +21,7 @@ class Part3Controller (object):
   def __init__ (self, connection):
     print (connection.dpid)
     # Keep track of the connection to the switch so that we can
-    # send it messages!
+    # send it messages
     self.connection = connection
 
     # This binds our PacketIn event listener
@@ -40,26 +40,87 @@ class Part3Controller (object):
     else:
       print ("UNKNOWN SWITCH")
       exit(1)
-
+  
   def s1_setup(self):
     #put switch 1 rules here
-    pass
+    rules = [
+      {'action':of.OFPP_FLOOD},
+    ]
+    self.ruleSetUp(rules)
 
   def s2_setup(self):
     #put switch 2 rules here
-    pass
+    rules = [
+      {'action':of.OFPP_FLOOD},
+    ]
+    self.ruleSetUp(rules)
 
   def s3_setup(self):
     #put switch 3 rules here
-    pass
+    rules = [
+      {'action':of.OFPP_FLOOD},
+    ]
+    self.ruleSetUp(rules)
+    
 
   def cores21_setup(self):
     #put core switch rules here
-    pass
+    host10Address, _ = IPS['h10']
+    host20Address, _ = IPS['h20']
+    host30Address, _ = IPS['h30']
+    server1Address, _ = IPS['serv1']
+    hnotrustAddress, _ = IPS['hnotrust']
+    
+    rules = [
+      #host 20 settings
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      #host 10 settings
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      #host 30 settings
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(server1Address),'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      #server 1 settings
+      {'nw_src':IPAddr(host10Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(host20Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      {'nw_src':IPAddr(host30Address),'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'tp_dst':None,'tp_src':None,'dl_type':0x800,'type':'allow'},
+      #allow ARP Packets for hosts
+      {'dl_type':0x806,'nw_dst':IPAddr(host10Address),'action':of.OFPP_NORMAL,'type':'allow'},
+      {'dl_type':0x806,'nw_dst':IPAddr(host20Address),'action':of.OFPP_NORMAL,'type':'allow'},
+      {'dl_type':0x806,'nw_dst':IPAddr(host30Address),'action':of.OFPP_NORMAL,'type':'allow'},
+      {'dl_type':0x806,'nw_dst':IPAddr(server1Address),'action':of.OFPP_NORMAL,'type':'allow'},
+    ]
+    self.ruleSetUp(rules)
 
   def dcs31_setup(self):
     #put datacenter switch rules here
-    pass
+    rules = [
+      {'action':of.OFPP_FLOOD}
+    ]
+    self.ruleSetUp(rules)
+    
+  def ruleSetUp(self, rules):
+    for rule in rules:
+      msg = of.ofp_flow_mod()
+      if self.connection.dpid == 21:
+        if 'tp_src' in rule.keys():
+          msg.match.nw_src = rule['nw_src']
+          msg.match.nw_dst = rule['nw_dst']
+          msg.match.tp_src = rule['tp_src']
+          msg.match.tp_dst = rule['tp_dst']
+          msg.match.dl_type = rule['dl_type']
+          msg.actions.append(of.ofp_action_output(port=rule['action'])) 
+        else:
+          msg.match.dl_type = rule['dl_type']
+          msg.match.nw_dst = rule['nw_dst']
+          msg.actions.append(of.ofp_action_output(port=rule['action']))
+      else:
+        msg.actions.append(of.ofp_action_output(port=rule['action']))
+      self.connection.send(msg)
 
   #used in part 4 to handle individual ARP packets
   #not needed for part 3 (USE RULES!)
