@@ -19,3 +19,18 @@ Executing the Script:
 
 
 ## SDN Controller using POX
+
+Under the pox directory, we used a skeleton POX controller and modified it to create a firewall that allows all ARP and ICMP traffic to pass.
+
+Install Necessary Package:
+
+*git clone http://github.com/noxrepo/pox*
+
+In order for the controller to function, run the following commands concurrently:
+
+*/pox.py part2controller* #run first (the *pox.py* file should be found under the default branch folder)
+
+*sudo ./part2* #run second
+
+
+
