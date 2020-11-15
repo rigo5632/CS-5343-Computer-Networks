@@ -22,14 +22,14 @@ class Firewall (object):
     #add switch rules here only
     # 0x806 
     self.rules = [
-      #ICMP Firewall rule
+      #ARP and ICMP Packets Firewall rule
       {'dl_dst':None,'idle_timeout':1000,'action':of.OFPP_FLOOD,'dl_type':0x806,'nw_proto':None},
       {'dl_dst':EthAddr('00:00:00:00:00:01'),'idle_timeout':1000,'action':1,'dl_type':0x800,'nw_proto':1},
       {'dl_dst':EthAddr('00:00:00:00:00:02'),'idle_timeout':1000,'action':2,'dl_type':0x800,'nw_proto':1},
       {'dl_dst':EthAddr('00:00:00:00:00:03'),'idle_timeout':1000,'action':3,'dl_type':0x800,'nw_proto':1},
       {'dl_dst':EthAddr('00:00:00:00:00:04'),'idle_timeout':1000,'action':4,'dl_type':0x800,'nw_proto':1},  
     ]
-
+    
   def _handle_ConnectionUp(self, event):
     for rule in self.rules:
       msg = of.ofp_flow_mod()
