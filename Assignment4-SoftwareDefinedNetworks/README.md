@@ -32,5 +32,16 @@ In order for the controller to function, run the following commands concurrently
 
 *sudo ./part2* #run second
 
+## Firewall in real network
 
+Under the pox directory, we used a skeleton POX controller and modified it to implement routing between subnets and firewalls for certain subnets.
 
+Install Necessary Package:
+
+*git clone http://github.com/noxrepo/pox*
+
+In order for the controller to function, run the following commands concurrently:
+
+*/pox.py part3controller* #run first (the *pox.py* file should be found under the default branch folder)
+
+*sudo ./part3* #run second
