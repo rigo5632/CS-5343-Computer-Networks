@@ -1,17 +1,18 @@
-#! /usr/bin/python3
-
-#import numpy
+import numpy as np
 import scipy.stats
 from matplotlib import pyplot as plt
+from PrintData import printAverageSize, printTopPorts
 
 class PacketManager():
     def __init__(self):
-        self.packetFile = np.genfromtxt('./Packet-Data/Netflow_dataset.csv', delimiter=',')
+        self.packetFile = np.genfromtxt('./Packet-Data/Netflow_dataset_small.csv', delimiter=',')
         self.packets = {}
         self.packetID = 1
-        self.packetSizes = 0
+        self.averageSize = 0
         self.flowDurations = []
         self.flowSizes = []
+        self.sourcePorts = {}
+        self.destinationPorts = {}
     
     # get specific data from csv file, and store them in dictionary
     def getPackets(self):
@@ -36,8 +37,8 @@ class PacketManager():
     # Get each packet size from packets and divide by the number of packets we have
     def getAveragePacketSize(self):
         if self.packets is None: return
-        for packet in self.packets: self.packetSizes += self.packets[packet]['packetBytes']
-        self.packetSizes // packetID
+        for packet in self.packets: self.averageSize += self.packets[packet]['packetBytes']
+        self.averageSize /= self.packetID
     
     def getFlowDurations(self):
         if self.flowDurations is None: return
@@ -46,15 +47,31 @@ class PacketManager():
     def getFlowSizes(self):
         if self.flowSizes is None: return
         for packet in self.packets: self.flowSizes.append(self.packets[packet]['numberOfPackets'], self.packets[packet]['packetBytes'])
+    
+    def getTopSourcePorts(self):
+        for packet in self.packets:
+            key = self.packets[packet]['sourcePort']
+            if self.sourcePorts.get(key) == None:
+                self.sourcePorts[key] = 1
+            else:
+                self.sourcePorts[key] += 1
+        self.sourcePorts = sorted(self.sourcePorts.items(), key=lambda x:x[1], reverse=True)
 
-    def createCCDF(data):
-        Year = [1920,1930,1940,1950,1960,1970,1980,1990,2000,2010]
-        Unemployment_Rate = [9.8,12,8,7.2,6.9,7,6.5,6.2,5.5,6.3]
-        
-        plt.plot(Year, Unemployment_Rate)
-        plt.title('Unemployment Rate Vs Year')
-        plt.xlabel('Year')
-        plt.ylabel('Unemployment Rate')
+    def getTopDestinationPorts(self):
+        for packet in self.packets:
+            key = self.packets[packet]['destinationPort']
+            if self.destinationPorts.get(key) == None:
+                self.destinationPorts[key] = 1
+            else:
+                self.destinationPorts[key] += 1
+        self.destinationPorts = sorted(self.destinationPorts.items(), key=lambda x:x[1], reverse=True)
+    
+    
+    def createCCDF(self):
+        plt.plot()
+        plt.title('Number of Packets vs Packet Sizes')
+        plt.xlabel('Number of Packets')
+        plt.ylabel('Packet Sizes')
         plt.show()
         # x = np.random.randn(10000) # generate samples from normal distribution (discrete data)
         # print(x)
@@ -63,7 +80,15 @@ class PacketManager():
         # plt.plot(x, norm_cdf)
         # plt.show()
         # print('hey')
+    
 
 analysis = PacketManager()
-analysis.createCCDF()
+analysis.getPackets()
+analysis.getAveragePacketSize()
+analysis.getTopSourcePorts()
+analysis.getTopDestinationPorts()
+printAverageSize(analysis.averageSize)
+printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
+printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
+
 
