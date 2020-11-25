@@ -1,11 +1,11 @@
 import numpy as np
 import scipy.stats
 from matplotlib import pyplot as plt
-from PrintData import printAverageSize, printTopPorts
+from PrintData import printAverageSize, printTopPorts, printAddressTraffic
 
 class PacketManager():
     def __init__(self):
-        self.packetFile = np.genfromtxt('./Packet-Data/Netflow_dataset_small.csv', delimiter=',')
+        self.packetFile = np.genfromtxt('./Packet-Data/Netflow_dataset_small.csv', delimiter=',', dtype=None, encoding=None)
         self.packets = {}
         self.packetID = 1
         self.averageSize = 0
@@ -13,6 +13,7 @@ class PacketManager():
         self.flowSizes = []
         self.sourcePorts = {}
         self.destinationPorts = {}
+        self.sourceAddress = {}
     
     # get specific data from csv file, and store them in dictionary
     def getPackets(self):
@@ -36,16 +37,13 @@ class PacketManager():
 
     # Get each packet size from packets and divide by the number of packets we have
     def getAveragePacketSize(self):
-        if self.packets is None: return
         for packet in self.packets: self.averageSize += self.packets[packet]['packetBytes']
         self.averageSize /= self.packetID
     
-    def getFlowDurations(self):
-        if self.flowDurations is None: return
+    def getFlowDurations(self): 
         for packet in self.packets: self.flowDurations.append(self.packets[packet]['timestampEnd'] - self.packets[packet]['timestampStart'])
 
-    def getFlowSizes(self):
-        if self.flowSizes is None: return
+    def getFlowSizes(self): 
         for packet in self.packets: self.flowSizes.append(self.packets[packet]['numberOfPackets'], self.packets[packet]['packetBytes'])
     
     def getTopSourcePorts(self):
@@ -66,29 +64,29 @@ class PacketManager():
                 self.destinationPorts[key] += 1
         self.destinationPorts = sorted(self.destinationPorts.items(), key=lambda x:x[1], reverse=True)
     
+    def mostActiveHosts(self):
+        for packet in self.packets:
+            key = self.packets[packet]['sourceAddress']
+            if self.sourceAddress.get(key) == None:
+                self.sourceAddress[key] = {'instances': 1, 'numberOfBytes': self.packets[packet]['packetBytes']}
+            else:
+                self.sourceAddress[key]['instances'] += 1
+                self.sourceAddress[key]['numberOfBytes'] += self.packets[packet]['packetBytes']
+        self.sourceAddress = sorted(self.sourceAddress.items(), key=lambda x:x[1]['instances'], reverse=True)
     
-    def createCCDF(self):
-        plt.plot()
-        plt.title('Number of Packets vs Packet Sizes')
-        plt.xlabel('Number of Packets')
-        plt.ylabel('Packet Sizes')
-        plt.show()
-        # x = np.random.randn(10000) # generate samples from normal distribution (discrete data)
-        # print(x)
-        # norm_cdf = scipy.stats.norm.cdf(x) # calculate the cdf - also discrete
-
-        # plt.plot(x, norm_cdf)
-        # plt.show()
-        # print('hey')
-    
-
 analysis = PacketManager()
 analysis.getPackets()
 analysis.getAveragePacketSize()
 analysis.getTopSourcePorts()
 analysis.getTopDestinationPorts()
+analysis.mostActiveHosts()
 printAverageSize(analysis.averageSize)
 printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
 printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
+
+
 
 
