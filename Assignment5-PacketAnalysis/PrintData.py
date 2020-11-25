@@ -14,3 +14,7 @@ def printAddressTraffic(addresses, limit, totalPackets):
     for i in range(limit):
         print(f'\t{addresses[i][0]}\t-\t{addresses[i][1]}')
 
+def printMaskTraffic(instances, numberOfBytes, totalPackets):
+    print(f'* Mask 0 Instances: \t{instances}')
+    print(f'* Mask 0 Total Bytes: \t{numberOfBytes}/{totalPackets}')
+

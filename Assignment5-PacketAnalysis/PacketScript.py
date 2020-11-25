@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats
 from matplotlib import pyplot as plt
-from PrintData import printAverageSize, printTopPorts, printAddressTraffic
+from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic
 
 class PacketManager():
     def __init__(self):
@@ -9,11 +9,13 @@ class PacketManager():
         self.packets = {}
         self.packetID = 1
         self.averageSize = 0
+        self.totalBytes = 0
         self.flowDurations = []
         self.flowSizes = []
         self.sourcePorts = {}
         self.destinationPorts = {}
         self.sourceAddress = {}
+        self.sourceMask = {'instances': 0, 'numberOfBytes': 0}
     
     # get specific data from csv file, and store them in dictionary
     def getPackets(self):
@@ -37,8 +39,8 @@ class PacketManager():
 
     # Get each packet size from packets and divide by the number of packets we have
     def getAveragePacketSize(self):
-        for packet in self.packets: self.averageSize += self.packets[packet]['packetBytes']
-        self.averageSize /= self.packetID
+        for packet in self.packets: self.totalBytes += self.packets[packet]['packetBytes']
+        self.averageSize = self.totalBytes / self.packetID
     
     def getFlowDurations(self): 
         for packet in self.packets: self.flowDurations.append(self.packets[packet]['timestampEnd'] - self.packets[packet]['timestampStart'])
@@ -64,25 +66,44 @@ class PacketManager():
                 self.destinationPorts[key] += 1
         self.destinationPorts = sorted(self.destinationPorts.items(), key=lambda x:x[1], reverse=True)
     
-    def mostActiveHosts(self):
+    def mostActiveHosts(self, removeZeroMask):
+        self.sourceAddress = {}
         for packet in self.packets:
             key = self.packets[packet]['sourceAddress']
-            if self.sourceAddress.get(key) == None:
-                self.sourceAddress[key] = {'instances': 1, 'numberOfBytes': self.packets[packet]['packetBytes']}
-            else:
-                self.sourceAddress[key]['instances'] += 1
-                self.sourceAddress[key]['numberOfBytes'] += self.packets[packet]['packetBytes']
+            mask = self.packets[packet]['sourceNetmask'] if removeZeroMask else -1            
+            if mask != 0:
+                if self.sourceAddress.get(key) == None:
+                    self.sourceAddress[key] = {'instances': 1, 'numberOfBytes': self.packets[packet]['packetBytes']}
+                else:
+                    self.sourceAddress[key]['instances'] += 1
+                    self.sourceAddress[key]['numberOfBytes'] += self.packets[packet]['packetBytes']
         self.sourceAddress = sorted(self.sourceAddress.items(), key=lambda x:x[1]['instances'], reverse=True)
+    
+    def mostActivezZeroMaskHosts(self):
+        for packet in self.packets:
+            mask = self.packets[packet]['sourceNetmask']
+            if mask == 0: 
+                self.sourceMask['instances'] += 1
+                self.sourceMask['numberOfBytes'] += self.packets[packet]['packetBytes']
+            
+
     
 analysis = PacketManager()
 analysis.getPackets()
 analysis.getAveragePacketSize()
 analysis.getTopSourcePorts()
 analysis.getTopDestinationPorts()
-analysis.mostActiveHosts()
+analysis.mostActiveHosts(False)
+analysis.mostActivezZeroMaskHosts()
 printAverageSize(analysis.averageSize)
 printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
 printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
+printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
+printMaskTraffic(analysis.sourceMask['instances'], analysis.sourceMask['numberOfBytes'],analysis.totalBytes)
+
+analysis.mostActiveHosts('True')
 printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
 printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
 printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
