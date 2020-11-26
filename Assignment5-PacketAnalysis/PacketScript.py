@@ -2,7 +2,8 @@ import numpy as np
 import scipy.stats
 import re
 from matplotlib import pyplot as plt
-from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic, printInstituesTraffic
+from PrintData import PrintPacketData
+#from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic, printInstituesTraffic
 
 class PacketManager():
     def __init__(self):
@@ -123,6 +124,7 @@ class PacketManager():
 
 
 analysis = PacketManager()
+packet = PrintPacketData()
 analysis.getPackets()
 analysis.getAveragePacketSize()
 analysis.getTopSourcePorts()
@@ -131,17 +133,18 @@ analysis.mostActiveHosts(False)
 analysis.mostActiveHosts(True)
 analysis.zeroMaskHosts()
 analysis.instituteATraffic('128.112.0.0')
-printAverageSize(analysis.averageSize)
-printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
-printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
-printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
-printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
-printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
-printMaskTraffic(analysis.sourceMask['instances'], analysis.sourceMask['numberOfBytes'],analysis.totalBytes)
-printAddressTraffic(analysis.maskFreeSourceAddress, 0.001, analysis.packetID)
-printAddressTraffic(analysis.maskFreeSourceAddress, 0.01, analysis.packetID)
-printAddressTraffic(analysis.maskFreeSourceAddress, 0.1, analysis.packetID)
-printInstituesTraffic(analysis.sentByInstitue, analysis.sentToInstitue, analysis.packetID, analysis.totalBytes)
+
+packet.printAverageSize(analysis.averageSize)
+packet.printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
+packet.printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
+packet.printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
+packet.printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
+packet.printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
+packet.printMaskTraffic(analysis.sourceMask['instances'], analysis.sourceMask['numberOfBytes'],analysis.totalBytes)
+packet.printAddressTraffic(analysis.maskFreeSourceAddress, 0.001, analysis.packetID)
+packet.printAddressTraffic(analysis.maskFreeSourceAddress, 0.01, analysis.packetID)
+packet.printAddressTraffic(analysis.maskFreeSourceAddress, 0.1, analysis.packetID)
+packet.printInstituesTraffic(analysis.sentByInstitue, analysis.sentToInstitue, analysis.packetID, analysis.totalBytes)
 
 
 
