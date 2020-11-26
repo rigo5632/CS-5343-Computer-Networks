@@ -1,3 +1,4 @@
+# Prints Packet Data
 class PrintPacketData():
     def printAverageSize(self, average):
         print(f'* Packet Average Size')

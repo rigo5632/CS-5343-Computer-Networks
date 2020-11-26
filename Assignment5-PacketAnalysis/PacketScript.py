@@ -3,7 +3,6 @@ import scipy.stats
 import re
 from matplotlib import pyplot as plt
 from PrintData import PrintPacketData
-#from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic, printInstituesTraffic
 
 class PacketManager():
     def __init__(self):
