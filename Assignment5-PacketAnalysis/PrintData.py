@@ -18,3 +18,12 @@ def printMaskTraffic(instances, numberOfBytes, totalPackets):
     print(f'* Mask 0 Instances: \t{instances}')
     print(f'* Mask 0 Total Bytes: \t{numberOfBytes}/{totalPackets}')
 
+def printInstituesTraffic(sentByInstitute, sentToInstitute, totalPackets, toatlBytes):
+    sentByInstituteBytes, sentByInstitutePackets = sentByInstitute['bytes'], sentByInstitute['packets']
+    sentToInstituteBytes, sentToInstitutePackets = sentToInstitute['bytes'], sentToInstitute['packets']
+    print(f'* Institute A Traffic')
+    print(f'* Sent By Institue A Bytes: \t{sentByInstituteBytes}/{toatlBytes} \tbytes')
+    print(f'* Sent By Institue A Packets: \t{sentByInstitutePackets}/{totalPackets} \t\tpackets')
+    print(f'* Sent To Institue A Bytes: \t{sentToInstituteBytes}/{toatlBytes} \tbytes')
+    print(f'* Sent To Institue A Packets: \t{sentToInstitutePackets}/{totalPackets} \t\tpackets')
+

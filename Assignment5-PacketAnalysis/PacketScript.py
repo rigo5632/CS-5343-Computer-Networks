@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.stats
+import re
 from matplotlib import pyplot as plt
-from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic
+from PrintData import printAverageSize, printTopPorts, printAddressTraffic, printMaskTraffic, printInstituesTraffic
 
 class PacketManager():
     def __init__(self):
@@ -17,6 +18,7 @@ class PacketManager():
         self.sourceAddress = {}
         self.maskFreeSourceAddress = {}
         self.sourceMask = {'instances': 0, 'numberOfBytes': 0}
+        self.sentByInstitue, self.sentToInstitue = {'bytes': 0, 'packets': 0}, {'bytes': 0, 'packets': 0}
     
     # get specific data from csv file, and store them in dictionary
     def getPackets(self):
@@ -90,11 +92,36 @@ class PacketManager():
                 self.sourceMask['instances'] += 1
                 self.sourceMask['numberOfBytes'] += self.packets[packet]['packetBytes']
     
-    #def instituteATraffic(self):
+    def institutesAddressRange(self, address):
+        lowestAddress = {'networkAddress1': None, 'networkAddress2': None, 'hostAddress1': None, 'hostAddress2': None}
+        highestAddress = {'networkAddress1': None, 'networkAddress2': None, 'hostAddress1': None, 'hostAddress2': None}
+        address = re.split('\.', address)
+        lowestAddress['networkAddress1'], lowestAddress['networkAddress2'], lowestAddress['hostAddress1'], lowestAddress['hostAddress2'] = int(address[0]), int(address[1]), int(address[2]), int(address[3])
+        highestAddress['networkAddress1'], highestAddress['networkAddress2'], highestAddress['hostAddress1'], highestAddress['hostAddress2'] = int(address[0]), int(address[1]), 255, 255
+        return lowestAddress, highestAddress
 
+    def getAddress(self, address):
+        address = re.split('\.', address)
+        return {'networkAddress1': int(address[0]), 'networkAddress2': int(address[1]), 'hostAddress1': int(address[2]), 'hostAddress2': int(address[3])}
+        
+    def instituteATraffic(self, address):
+        lowestAddress, highestAddress = self.institutesAddressRange(address)
+    
+        for packet in self.packets:
+            sourceAddress = self.getAddress(self.packets[packet]['sourceAddress'])
+            destinationAddress = self.getAddress(self.packets[packet]['destinationAddress'])
+
+            if lowestAddress['networkAddress1'] == sourceAddress['networkAddress1'] and lowestAddress['networkAddress2'] == sourceAddress['networkAddress2']:
+                if sourceAddress['hostAddress1'] >= lowestAddress['hostAddress1'] and sourceAddress['hostAddress2'] >= lowestAddress['hostAddress2'] and sourceAddress['hostAddress1'] <= highestAddress['hostAddress1'] and sourceAddress['hostAddress2'] <= highestAddress['hostAddress2']:
+                    self.sentByInstitue['bytes'] += self.packets[packet]['packetBytes']
+                    self.sentByInstitue['packets'] += self.packets[packet]['numberOfPackets']
+            if lowestAddress['networkAddress1'] == destinationAddress['networkAddress1'] and lowestAddress['networkAddress2'] == destinationAddress['networkAddress2']:
+                if destinationAddress['hostAddress1'] >= lowestAddress['hostAddress1'] and destinationAddress['hostAddress2'] >= lowestAddress['hostAddress2'] and destinationAddress['hostAddress1'] <= highestAddress['hostAddress1'] and destinationAddress['hostAddress2'] <= highestAddress['hostAddress2']:
+                    self.sentToInstitue['bytes'] += self.packets[packet]['packetBytes']
+                    self.sentToInstitue['packets'] += self.packets[packet]['numberOfPackets']
             
 
-    
+
 analysis = PacketManager()
 analysis.getPackets()
 analysis.getAveragePacketSize()
@@ -103,6 +130,7 @@ analysis.getTopDestinationPorts()
 analysis.mostActiveHosts(False)
 analysis.mostActiveHosts(True)
 analysis.zeroMaskHosts()
+analysis.instituteATraffic('128.112.0.0')
 printAverageSize(analysis.averageSize)
 printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
 printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
@@ -113,6 +141,8 @@ printMaskTraffic(analysis.sourceMask['instances'], analysis.sourceMask['numberOf
 printAddressTraffic(analysis.maskFreeSourceAddress, 0.001, analysis.packetID)
 printAddressTraffic(analysis.maskFreeSourceAddress, 0.01, analysis.packetID)
 printAddressTraffic(analysis.maskFreeSourceAddress, 0.1, analysis.packetID)
+printInstituesTraffic(analysis.sentByInstitue, analysis.sentToInstitue, analysis.packetID, analysis.totalBytes)
+
 
 
 
