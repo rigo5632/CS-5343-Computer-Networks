@@ -15,6 +15,7 @@ class PacketManager():
         self.sourcePorts = {}
         self.destinationPorts = {}
         self.sourceAddress = {}
+        self.maskFreeSourceAddress = {}
         self.sourceMask = {'instances': 0, 'numberOfBytes': 0}
     
     # get specific data from csv file, and store them in dictionary
@@ -67,24 +68,30 @@ class PacketManager():
         self.destinationPorts = sorted(self.destinationPorts.items(), key=lambda x:x[1], reverse=True)
     
     def mostActiveHosts(self, removeZeroMask):
-        self.sourceAddress = {}
+        addressBook = {}         
         for packet in self.packets:
             key = self.packets[packet]['sourceAddress']
-            mask = self.packets[packet]['sourceNetmask'] if removeZeroMask else -1            
+            mask = self.packets[packet]['sourceNetmask'] if removeZeroMask else -1
             if mask != 0:
-                if self.sourceAddress.get(key) == None:
-                    self.sourceAddress[key] = {'instances': 1, 'numberOfBytes': self.packets[packet]['packetBytes']}
+                if addressBook.get(key) == None: addressBook[key] = {'instances': 1, 'numberOfBytes': self.packets[packet]['packetBytes']}
                 else:
-                    self.sourceAddress[key]['instances'] += 1
-                    self.sourceAddress[key]['numberOfBytes'] += self.packets[packet]['packetBytes']
-        self.sourceAddress = sorted(self.sourceAddress.items(), key=lambda x:x[1]['instances'], reverse=True)
+                    addressBook[key]['instances'] += 1
+                    addressBook[key]['numberOfBytes'] += self.packets[packet]['packetBytes']
+        addressBook = sorted(addressBook.items(), key=lambda x:x[1]['instances'], reverse=True)
+        if removeZeroMask:
+            self.maskFreeSourceAddress = addressBook
+            return
+        self.sourceAddress = addressBook
     
-    def mostActivezZeroMaskHosts(self):
+    def zeroMaskHosts(self):
         for packet in self.packets:
             mask = self.packets[packet]['sourceNetmask']
             if mask == 0: 
                 self.sourceMask['instances'] += 1
                 self.sourceMask['numberOfBytes'] += self.packets[packet]['packetBytes']
+    
+    #def instituteATraffic(self):
+
             
 
     
@@ -94,7 +101,8 @@ analysis.getAveragePacketSize()
 analysis.getTopSourcePorts()
 analysis.getTopDestinationPorts()
 analysis.mostActiveHosts(False)
-analysis.mostActivezZeroMaskHosts()
+analysis.mostActiveHosts(True)
+analysis.zeroMaskHosts()
 printAverageSize(analysis.averageSize)
 printTopPorts(analysis.sourcePorts, 'Source Port', analysis.packetID)
 printTopPorts(analysis.destinationPorts, 'Destination Port', analysis.packetID)
@@ -102,11 +110,9 @@ printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
 printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
 printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
 printMaskTraffic(analysis.sourceMask['instances'], analysis.sourceMask['numberOfBytes'],analysis.totalBytes)
-
-analysis.mostActiveHosts('True')
-printAddressTraffic(analysis.sourceAddress, 0.001, analysis.packetID)
-printAddressTraffic(analysis.sourceAddress, 0.01, analysis.packetID)
-printAddressTraffic(analysis.sourceAddress, 0.1, analysis.packetID)
+printAddressTraffic(analysis.maskFreeSourceAddress, 0.001, analysis.packetID)
+printAddressTraffic(analysis.maskFreeSourceAddress, 0.01, analysis.packetID)
+printAddressTraffic(analysis.maskFreeSourceAddress, 0.1, analysis.packetID)
 
 
 
