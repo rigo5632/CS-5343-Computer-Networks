@@ -1,29 +1,32 @@
 # Prints Packet Data
 class PrintPacketData():
     def printAverageSize(self, average):
-        print(f'* Packet Average Size')
-        print(f'- Packets Average Byte Size:\t{average}')
+        print(f'A. Packet Average Size')
+        print(f'* Packets Average Byte Size:\t{average:.2f}')
 
-    def printTopPorts(self,ports, classification, totalPackets):
-        print(f'* {classification} (Port Number - Number of Instances - Percentage of Traffic)')
+    def printTopPorts(self, ports, classification, totalPackets, totalBytes):
+        print(f'C. {classification} (Port Number - Packet Bytes per Total Packets - Packet Bytes per Total Bytes)')
         for i in range(10):
-            percentage = (ports[i][1]/totalPackets)*100
-            print(f'\t{ports[i][0]}\t-\t{ports[i][1]}\t-\t{percentage:.2f} %')
+            port, instances, packetBytes = ports[i][0], ports[i][1]['instances'], ports[i][1]['bytes']
+            bytesByTotalPackets = (packetBytes/totalPackets)*100
+            bytesByTotalBytes =  (packetBytes/totalBytes)*100
+            print(f'\t{port}\t-\t{bytesByTotalBytes:.2f}%\t-\t{bytesByTotalBytes:.2f}%')
 
-    def printAddressTraffic(self, addresses, limit, totalPackets):
+    def printAddressTraffic(self, addresses, limit, totalPackets, totalBytes, section):
         percentage = limit * 100
         limit = int(limit*totalPackets)
-        print(f'* {percentage}% Source Address Traffic (Address - instances - bytes)')
-        for i in range(limit):
-            address, instances, numberOfBytes = addresses[i][0], addresses[i][1]['instances'], addresses[i][1]['numberOfBytes']
-            print(f'\t{address}\t-\t{instances}\t-\t{numberOfBytes}\t\tbytes')
+        totalTraffic = 0
+        for i in range(limit): 
+            if i >= len(addresses):break
+            totalTraffic += addresses[i][1]['bytes']
+        print(f'C.{section} {percentage}% Source Address Traffic')
+        print(f'* Total Traffic: \t{totalTraffic} bytes / {totalBytes} bytes')
 
-    def printMaskTraffic(self, instances, numberOfBytes, totalPackets):
-        print(f'* Mask 0 Information')
-        print(f'- Instances: {instances}')
-        print(f'- Total Bytes: \t{numberOfBytes}/{totalPackets}')
+    def printMaskTraffic(self, numberOfBytes, totalPackets):
+        print(f'C.4 Mask 0 Information')
+        print(f'* Total Bytes: \t{numberOfBytes} bytes / {totalPackets} bytes')
 
-    def printInstituesTraffic(self, sentByInstitute, sentToInstitute, totalPackets, toatlBytes):
+    def printInstitutesTraffic(self, sentByInstitute, sentToInstitute, totalPackets, toatlBytes):
         sentByInstituteBytes, sentByInstitutePackets = sentByInstitute['bytes'], sentByInstitute['packets']
         sentToInstituteBytes, sentToInstitutePackets = sentToInstitute['bytes'], sentToInstitute['packets']
         print(f'* Institute A Traffic')
